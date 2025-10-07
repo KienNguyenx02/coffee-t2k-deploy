@@ -45,24 +45,36 @@ class _OrdersScreenState extends State<OrdersScreen>
     try {
       final orders = await _apiService.getOrders();
 
-      setState(() {
-        _allOrders = orders;
-        _processingOrders = orders
-            .where(
-              (order) =>
-                  order.isProcessing || order.isPreparing || order.isReady,
-            )
-            .toList();
-        _completedOrders = orders
-            .where((order) => order.isCompleted || order.isCancelled)
-            .toList();
-        _isLoading = false;
+      // Sắp xếp đơn hàng theo thời gian mới nhất trước
+      orders.sort((a, b) {
+        if (a.orderTime == null && b.orderTime == null) return 0;
+        if (a.orderTime == null) return 1;
+        if (b.orderTime == null) return -1;
+        return b.orderTime!.compareTo(a.orderTime!);
       });
+
+      if (mounted) {
+        setState(() {
+          _allOrders = orders;
+          _processingOrders = orders
+              .where(
+                (order) =>
+                    order.isProcessing || order.isPreparing || order.isReady,
+              )
+              .toList();
+          _completedOrders = orders
+              .where((order) => order.isCompleted || order.isCancelled)
+              .toList();
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 

@@ -42,11 +42,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _loadTables() async {
     try {
       final tables = await _apiService.getTables();
-      setState(() {
-        _tables = tables
-            .where((table) => (table as CafeTable).isAvailable)
-            .toList();
-      });
+      if (mounted) {
+        setState(() {
+          _tables = tables
+              .where((table) => (table as CafeTable).isAvailable)
+              .toList();
+        });
+      }
     } catch (e) {
       print('Error loading tables: $e');
     }
@@ -57,9 +59,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final cartProvider = Provider.of<CartProvider>(context, listen: false);

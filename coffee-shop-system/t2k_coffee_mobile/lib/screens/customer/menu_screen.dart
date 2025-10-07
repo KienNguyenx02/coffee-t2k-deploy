@@ -43,10 +43,12 @@ class _MenuScreenState extends State<MenuScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       // Load categories and products in parallel
@@ -58,12 +60,14 @@ class _MenuScreenState extends State<MenuScreen> with TickerProviderStateMixin {
       final categories = results[0] as List<Category>;
       final products = results[1] as List<Product>;
 
-      setState(() {
-        _categories = categories;
-        _products = products;
-        _filteredProducts = products;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+          _products = products;
+          _filteredProducts = products;
+          _isLoading = false;
+        });
+      }
 
       // Update tab controller length
       _tabController = TabController(
@@ -71,10 +75,12 @@ class _MenuScreenState extends State<MenuScreen> with TickerProviderStateMixin {
         vsync: this,
       );
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 

@@ -79,8 +79,8 @@ class CartScreen extends StatelessWidget {
             CustomButton(
               text: 'Xem menu',
               onPressed: () {
-                // Navigate to menu (index 0)
-                DefaultTabController.of(context).animateTo(0);
+                // Navigate to customer home (menu tab)
+                context.pushReplacement('/customer');
               },
               icon: Icons.restaurant_menu,
             ),
