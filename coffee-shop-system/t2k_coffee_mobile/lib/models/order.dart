@@ -108,6 +108,16 @@ class Order {
   bool get isCancelled => status?.toLowerCase() == 'cancelled';
 
   String get displayLocation {
+    // Kiểm tra nếu có table object
+    if (table != null && table!.tableNumber != null) {
+      String locationText = 'Bàn ${table!.tableNumber}';
+      if (table!.location != null && table!.location!.isNotEmpty) {
+        locationText += ' (${table!.location})';
+      }
+      return locationText;
+    }
+
+    // Fallback cho tableNumber string (cho takeaway)
     if (tableNumber == 'takeaway') return 'Mang đi';
     if (tableNumber != null) return 'Bàn $tableNumber';
     if (location != null) return location!;
