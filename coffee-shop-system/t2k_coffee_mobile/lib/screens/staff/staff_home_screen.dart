@@ -74,7 +74,9 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
         title: const Text('T2K Coffee - Pha chế'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
-        elevation: 0,
+        elevation: 2,
+        shadowColor: AppTheme.primaryColor.withOpacity(0.3),
+        centerTitle: true,
         actions: [
           // Connection status
           Consumer<StaffProvider>(
@@ -196,28 +198,28 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
 
   Widget _buildStatusBar(StaffProvider staffProvider) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: Colors.white,
       child: Row(
         children: [
           Expanded(
             child: _buildStatusCard(
-              'Đơn hàng mới',
+              'Mới',
               staffProvider.newOrdersCount.toString(),
               AppTheme.warningColor,
               Icons.add_circle_outline,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
             child: _buildStatusCard(
-              'Đang chế biến',
+              'Chế biến',
               staffProvider.preparingOrdersCount.toString(),
               AppTheme.accentColor,
               Icons.coffee,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
             child: _buildStatusCard(
               'Sẵn sàng',
@@ -238,32 +240,43 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
     IconData icon,
   ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 4),
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 6),
           Text(
             count,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: color,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             title,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: color,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -283,20 +296,20 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
       children: [
         // Quick actions
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               Expanded(
                 child: CustomButton(
-                  text: 'Quản lý đơn hàng',
+                  text: 'Quản lý',
                   onPressed: () => context.push('/staff/orders'),
                   icon: Icons.receipt_long,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: CustomButton(
-                  text: 'Sẵn sàng nhận đơn',
+                  text: 'Sẵn sàng',
                   onPressed: () => staffProvider.notifyReady(),
                   isOutlined: true,
                   icon: Icons.notifications_active,
@@ -304,6 +317,13 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
               ),
             ],
           ),
+        ),
+
+        // Divider
+        Container(
+          height: 1,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          color: AppTheme.textSecondary.withOpacity(0.1),
         ),
 
         // Orders list
@@ -315,37 +335,61 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
   Widget _buildOrdersList(StaffProvider staffProvider) {
     final allOrders = staffProvider.allOrders;
 
-    if (allOrders.isEmpty) {
+    // Lọc chỉ hiển thị đơn hàng chưa hoàn thành
+    final activeOrders = allOrders.where((order) {
+      final status = order.status?.toLowerCase();
+      return status != 'completed' && status != 'cancelled';
+    }).toList();
+
+    if (activeOrders.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.coffee_outlined,
-              size: 64,
-              color: AppTheme.textSecondary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Chưa có đơn hàng nào',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Đơn hàng mới sẽ hiển thị ở đây',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Icon(
+                  Icons.coffee_outlined,
+                  size: 48,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Không có đơn hàng nào',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Tất cả đơn hàng đã hoàn thành!\nĐơn hàng mới sẽ hiển thị ở đây.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: allOrders.length,
+      padding: const EdgeInsets.only(bottom: 16),
+      itemCount: activeOrders.length,
       itemBuilder: (context, index) {
-        final order = allOrders[index];
+        final order = activeOrders[index];
         return StaffOrderCard(
           order: order,
           onStatusUpdate: (newStatus) =>

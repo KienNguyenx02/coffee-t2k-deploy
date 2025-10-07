@@ -144,6 +144,11 @@ class OrderDetail {
       _$OrderDetailFromJson(json);
   Map<String, dynamic> toJson() => _$OrderDetailToJson(this);
 
+  String get formattedUnitPrice {
+    if (unitPrice == null || unitPrice == 0) return '0 đ';
+    return '${unitPrice!.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} đ';
+  }
+
   String get formattedSubtotal {
     double calculatedSubtotal = 0;
 

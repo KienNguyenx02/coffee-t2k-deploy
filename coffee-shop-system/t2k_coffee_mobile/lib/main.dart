@@ -16,6 +16,7 @@ import 'screens/customer/order_success_screen.dart';
 import 'screens/customer/product_detail_screen.dart';
 import 'screens/staff/staff_home_screen.dart';
 import 'screens/staff/orders_management_screen.dart';
+import 'screens/staff/staff_order_detail_screen.dart';
 import 'utils/app_theme.dart';
 import 'models/order.dart';
 import 'models/product.dart';
@@ -101,6 +102,13 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: 'orders',
           builder: (context, state) => const OrdersManagementScreen(),
+        ),
+        GoRoute(
+          path: 'order-detail',
+          builder: (context, state) {
+            final order = state.extra as Order;
+            return StaffOrderDetailScreen(order: order);
+          },
         ),
       ],
     ),

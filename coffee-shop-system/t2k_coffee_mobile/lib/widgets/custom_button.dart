@@ -94,14 +94,18 @@ class CustomButton extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: textColor,
+          Icon(icon, size: 18),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],
@@ -111,10 +115,12 @@ class CustomButton extends StatelessWidget {
     return Text(
       text,
       style: TextStyle(
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
         color: textColor,
       ),
+      overflow: TextOverflow.ellipsis,
+      maxLines: 1,
     );
   }
 }
