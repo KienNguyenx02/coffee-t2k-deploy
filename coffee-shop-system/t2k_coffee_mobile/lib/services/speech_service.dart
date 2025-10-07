@@ -228,7 +228,7 @@ class SpeechService {
   Future<void> playNotificationSound() async {
     try {
       // Play the notification bell sound
-      await _audioPlayer.play(AssetSource('sounds/thongbao.mp3'));
+      await _audioPlayer.play(AssetSource('sounds/thongbao2.mp3'));
     } catch (e) {
       // If asset fails, try to create a simple beep sound
       try {
