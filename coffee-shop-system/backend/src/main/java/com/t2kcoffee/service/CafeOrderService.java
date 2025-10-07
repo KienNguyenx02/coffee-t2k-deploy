@@ -12,6 +12,7 @@ import com.t2kcoffee.repository.CafeTableRepository;
 import com.t2kcoffee.repository.OrderDetailRepository;
 import com.t2kcoffee.repository.ProductRepository;
 import com.t2kcoffee.service.AccountService;
+import com.t2kcoffee.service.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,18 +36,21 @@ public class CafeOrderService {
     private final ProductRepository productRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final AccountService accountService;
+    private final WebSocketService webSocketService;
 
     @Autowired
     public CafeOrderService(CafeOrderRepository cafeOrderRepository, 
                            CafeTableRepository cafeTableRepository,
                            ProductRepository productRepository,
                            OrderDetailRepository orderDetailRepository,
-                           AccountService accountService) {
+                           AccountService accountService,
+                           WebSocketService webSocketService) {
         this.cafeOrderRepository = cafeOrderRepository;
         this.cafeTableRepository = cafeTableRepository;
         this.productRepository = productRepository;
         this.orderDetailRepository = orderDetailRepository;
         this.accountService = accountService;
+        this.webSocketService = webSocketService;
     }
 
     public List<CafeOrder> getAllOrders() {
@@ -95,6 +99,9 @@ public class CafeOrderService {
         if (savedOrder.getAccount() != null && savedOrder.getTotalAmount() != null) {
             addRewardPointsForOrder(savedOrder);
         }
+        
+        // Gửi thông báo đơn hàng mới đến staff qua WebSocket
+        webSocketService.notifyStaffNewOrder(savedOrder);
 
         return savedOrder;
     }
@@ -235,7 +242,13 @@ public class CafeOrderService {
             
             CafeOrder updatedOrder = cafeOrderRepository.save(order);
             
+            // Gửi thông báo cập nhật trạng thái đến customer
+            webSocketService.notifyCustomerOrderUpdate(updatedOrder);
             
+            // Nếu đơn hàng hoàn thành, gửi thông báo đặc biệt
+            if ("COMPLETED".equalsIgnoreCase(status)) {
+                webSocketService.notifyCustomerOrderCompleted(updatedOrder);
+            }
             
             return updatedOrder;
         }

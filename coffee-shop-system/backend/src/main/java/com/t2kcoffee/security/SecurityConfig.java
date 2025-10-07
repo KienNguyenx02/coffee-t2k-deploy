@@ -32,7 +32,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/promotions/**", "/api/tables/**", "/api/variants/**", "/api/accounts/*/reward-points").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/promotions/**", "/api/tables/**", "/api/variants/**", "/api/accounts/*/reward-points", "/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/orders/**").permitAll()
                 .requestMatchers(HttpMethod.PUT, "/api/orders/**").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/tables/**").permitAll()

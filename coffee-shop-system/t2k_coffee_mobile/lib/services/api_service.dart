@@ -1,0 +1,374 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user.dart';
+import '../models/product.dart';
+import '../models/category.dart';
+import '../models/order.dart';
+import '../models/table.dart';
+import '../utils/api_config.dart';
+
+class ApiService {
+  static final ApiService _instance = ApiService._internal();
+  factory ApiService() => _instance;
+  ApiService._internal();
+
+  String? _token;
+  User? _currentUser;
+
+  // Getters
+  String? get token => _token;
+  User? get currentUser => _currentUser;
+  bool get isLoggedIn => _token != null && _currentUser != null;
+
+  // Initialize service
+  Future<void> initialize() async {
+    await _loadTokenFromStorage();
+  }
+
+  // Load token from shared preferences
+  Future<void> _loadTokenFromStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    _token = prefs.getString('auth_token');
+    final userJson = prefs.getString('current_user');
+    if (userJson != null) {
+      _currentUser = User.fromJson(json.decode(userJson));
+    }
+  }
+
+  // Save token to shared preferences
+  Future<void> _saveTokenToStorage(String token, User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+    await prefs.setString('current_user', json.encode(user.toJson()));
+    _token = token;
+    _currentUser = user;
+  }
+
+  // Clear token from storage
+  Future<void> _clearTokenFromStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('current_user');
+    _token = null;
+    _currentUser = null;
+  }
+
+  // Get headers with authentication
+  Map<String, String> _getHeaders({Map<String, String>? additionalHeaders}) {
+    final headers = Map<String, String>.from(ApiConfig.defaultHeaders);
+
+    // Add ngrok bypass header for free tier
+    if (ApiConfig.useNgrok) {
+      headers['ngrok-skip-browser-warning'] = 'true';
+    }
+
+    if (_token != null) {
+      headers['Authorization'] = 'Bearer $_token';
+    }
+    if (additionalHeaders != null) {
+      headers.addAll(additionalHeaders);
+    }
+    return headers;
+  }
+
+  // Make HTTP request
+  Future<http.Response> _makeRequest(
+    String method,
+    String endpoint, {
+    Map<String, String>? headers,
+    Object? body,
+  }) async {
+    final url = '${ApiConfig.baseUrl}$endpoint';
+    final requestHeaders = _getHeaders(additionalHeaders: headers);
+
+    http.Response response;
+    switch (method.toUpperCase()) {
+      case 'GET':
+        response = await http
+            .get(Uri.parse(url), headers: requestHeaders)
+            .timeout(Duration(milliseconds: ApiConfig.connectTimeout));
+        break;
+      case 'POST':
+        response = await http
+            .post(Uri.parse(url), headers: requestHeaders, body: body)
+            .timeout(Duration(milliseconds: ApiConfig.connectTimeout));
+        break;
+      case 'PUT':
+        response = await http
+            .put(Uri.parse(url), headers: requestHeaders, body: body)
+            .timeout(Duration(milliseconds: ApiConfig.connectTimeout));
+        break;
+      case 'DELETE':
+        response = await http
+            .delete(Uri.parse(url), headers: requestHeaders)
+            .timeout(Duration(milliseconds: ApiConfig.connectTimeout));
+        break;
+      default:
+        throw Exception('Unsupported HTTP method: $method');
+    }
+
+    return response;
+  }
+
+  // Handle API response
+  dynamic _handleResponse(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) {
+        return {'success': true};
+      }
+      return json.decode(response.body);
+    } else if (response.statusCode == 401) {
+      // Unauthorized - clear token
+      _clearTokenFromStorage();
+      throw Exception('Unauthorized - Please login again');
+    } else {
+      throw Exception('API Error: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  // Authentication
+  Future<Map<String, dynamic>> login(String username, String password) async {
+    try {
+      final response = await _makeRequest(
+        'POST',
+        ApiConfig.loginEndpoint,
+        body: json.encode({'userName': username, 'passWord': password}),
+      );
+
+      final data = _handleResponse(response) as Map<String, dynamic>;
+
+      if (data['token'] != null) {
+        // Create user object from response
+        final user = User(
+          idAccount: data['userId'],
+          userName: username,
+          fullName: data['fullName'],
+          role: data['role'],
+        );
+
+        await _saveTokenToStorage(data['token'], user);
+      }
+
+      return data;
+    } catch (e) {
+      throw Exception('Login failed: $e');
+    }
+  }
+
+  Future<void> logout() async {
+    await _clearTokenFromStorage();
+  }
+
+  // Products
+  Future<List<Product>> getProducts() async {
+    try {
+      final response = await _makeRequest('GET', ApiConfig.productsEndpoint);
+      final data = _handleResponse(response);
+
+      if (data is List) {
+        return (data as List<dynamic>)
+            .map((json) => Product.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to fetch products: $e');
+    }
+  }
+
+  Future<Product?> getProduct(int productId) async {
+    try {
+      final response = await _makeRequest(
+        'GET',
+        '${ApiConfig.productsEndpoint}/$productId',
+      );
+      final data = _handleResponse(response);
+      return Product.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to fetch product: $e');
+    }
+  }
+
+  // Categories
+  Future<List<Category>> getCategories() async {
+    try {
+      final response = await _makeRequest('GET', ApiConfig.categoriesEndpoint);
+      final data = _handleResponse(response);
+
+      print('Categories data type: ${data.runtimeType}');
+      print('Categories data: $data');
+
+      if (data is List) {
+        return (data as List<dynamic>)
+            .map((json) {
+              // Ensure each item is a Map before parsing
+              if (json is Map<String, dynamic>) {
+                return Category.fromJson(json);
+              } else {
+                print('Warning: Invalid category data format: $json');
+                return null;
+              }
+            })
+            .where((category) => category != null)
+            .cast<Category>()
+            .toList();
+      } else if (data is Map) {
+        // If data is a single category object, wrap it in a list
+        return [Category.fromJson(data as Map<String, dynamic>)];
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching categories: $e');
+      throw Exception('Failed to fetch categories: $e');
+    }
+  }
+
+  // Orders
+  Future<List<Order>> getOrders() async {
+    try {
+      final response = await _makeRequest('GET', ApiConfig.ordersEndpoint);
+      final data = _handleResponse(response);
+
+      if (data is List) {
+        return (data as List<dynamic>)
+            .map((json) => Order.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to fetch orders: $e');
+    }
+  }
+
+  Future<Order?> getOrder(int orderId) async {
+    try {
+      final response = await _makeRequest(
+        'GET',
+        '${ApiConfig.ordersEndpoint}/$orderId',
+      );
+      final data = _handleResponse(response);
+      return Order.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to fetch order: $e');
+    }
+  }
+
+  Future<Order> createOrder(Map<String, dynamic> orderData) async {
+    try {
+      final response = await _makeRequest(
+        'POST',
+        ApiConfig.ordersEndpoint,
+        body: json.encode(orderData),
+      );
+      final data = _handleResponse(response);
+      return Order.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to create order: $e');
+    }
+  }
+
+  Future<Order> updateOrderStatus(int orderId, String status) async {
+    try {
+      final response = await _makeRequest(
+        'PUT',
+        '${ApiConfig.ordersEndpoint}/$orderId/status',
+        body: json.encode({'status': status}),
+      );
+      final data = _handleResponse(response);
+      return Order.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to update order status: $e');
+    }
+  }
+
+  Future<Order> updatePaymentInfo(
+    int orderId,
+    String paymentMethod,
+    String paymentStatus,
+  ) async {
+    try {
+      final response = await _makeRequest(
+        'PUT',
+        '${ApiConfig.ordersEndpoint}/$orderId/payment',
+        body: json.encode({
+          'paymentMethod': paymentMethod,
+          'paymentStatus': paymentStatus,
+        }),
+      );
+      final data = _handleResponse(response);
+      return Order.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to update payment info: $e');
+    }
+  }
+
+  // Tables
+  Future<List<CafeTable>> getTables() async {
+    try {
+      final response = await _makeRequest('GET', ApiConfig.tablesEndpoint);
+      final data = _handleResponse(response);
+
+      if (data is List) {
+        return (data as List<dynamic>)
+            .map((json) => CafeTable.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to fetch tables: $e');
+    }
+  }
+
+  Future<Table> updateTableStatus(int tableId, String status) async {
+    try {
+      final response = await _makeRequest(
+        'PATCH',
+        '${ApiConfig.tablesEndpoint}/$tableId/status?status=$status',
+      );
+      final data = _handleResponse(response);
+      return Table.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to update table status: $e');
+    }
+  }
+
+  // Dashboard
+  Future<Map<String, dynamic>> getDashboardSummary() async {
+    try {
+      final response = await _makeRequest(
+        'GET',
+        '${ApiConfig.dashboardEndpoint}/summary',
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      throw Exception('Failed to fetch dashboard summary: $e');
+    }
+  }
+
+  // WebSocket Test
+  Future<Map<String, dynamic>> testWebSocketConnection() async {
+    try {
+      final response = await _makeRequest(
+        'GET',
+        ApiConfig.websocketTestEndpoint,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      throw Exception('Failed to test WebSocket connection: $e');
+    }
+  }
+
+  // Check connectivity
+  Future<bool> checkConnectivity() async {
+    try {
+      final response = await _makeRequest(
+        'GET',
+        ApiConfig.websocketTestEndpoint,
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+}
