@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/order.dart';
 import '../models/websocket_message.dart';
@@ -15,6 +16,7 @@ class StaffProvider with ChangeNotifier {
   String? _error;
   bool _isConnected = false;
   String? _staffName;
+  Timer? _pollingTimer;
 
   // Getters
   List<Order> get allOrders => _allOrders;
@@ -48,6 +50,9 @@ class StaffProvider with ChangeNotifier {
       // Connect to WebSocket
       await _connectWebSocket();
 
+      // Start polling for new orders (fallback if WebSocket fails)
+      _startOrderPolling();
+
       _clearError();
     } catch (e) {
       _setError('Failed to initialize: $e');
@@ -59,7 +64,17 @@ class StaffProvider with ChangeNotifier {
   // Load orders from API
   Future<void> _loadOrders() async {
     try {
-      final orders = await _apiService.getOrders();
+      // Use getAllOrders for staff (gets all orders, not just customer's orders)
+      final orders = await _apiService.getAllOrders();
+
+      // Sắp xếp đơn hàng theo thời gian mới nhất trước
+      orders.sort((a, b) {
+        if (a.orderTime == null && b.orderTime == null) return 0;
+        if (a.orderTime == null) return 1;
+        if (b.orderTime == null) return -1;
+        return b.orderTime!.compareTo(a.orderTime!);
+      });
+
       _allOrders = orders;
       notifyListeners();
     } catch (e) {
@@ -112,6 +127,14 @@ class StaffProvider with ChangeNotifier {
       final order = Order.fromJson(notification.order);
       _allOrders.insert(0, order);
 
+      // Sắp xếp lại danh sách theo thời gian mới nhất
+      _allOrders.sort((a, b) {
+        if (a.orderTime == null && b.orderTime == null) return 0;
+        if (a.orderTime == null) return 1;
+        if (b.orderTime == null) return -1;
+        return b.orderTime!.compareTo(a.orderTime!);
+      });
+
       // Announce new order with speech
       _speechService.announceNewOrder(
         orderId: order.idOrder!,
@@ -130,6 +153,15 @@ class StaffProvider with ChangeNotifier {
 
       if (index >= 0) {
         _allOrders[index] = updatedOrder;
+
+        // Sắp xếp lại danh sách sau khi cập nhật
+        _allOrders.sort((a, b) {
+          if (a.orderTime == null && b.orderTime == null) return 0;
+          if (a.orderTime == null) return 1;
+          if (b.orderTime == null) return -1;
+          return b.orderTime!.compareTo(a.orderTime!);
+        });
+
         notifyListeners();
       }
     }
@@ -150,6 +182,15 @@ class StaffProvider with ChangeNotifier {
       final index = _allOrders.indexWhere((order) => order.idOrder == orderId);
       if (index >= 0) {
         _allOrders[index] = updatedOrder;
+
+        // Sắp xếp lại danh sách sau khi cập nhật
+        _allOrders.sort((a, b) {
+          if (a.orderTime == null && b.orderTime == null) return 0;
+          if (a.orderTime == null) return 1;
+          if (b.orderTime == null) return -1;
+          return b.orderTime!.compareTo(a.orderTime!);
+        });
+
         notifyListeners();
       }
 
@@ -184,6 +225,22 @@ class StaffProvider with ChangeNotifier {
     await _loadOrders();
   }
 
+  // Start polling for new orders (fallback if WebSocket fails)
+  void _startOrderPolling() {
+    _stopOrderPolling();
+    _pollingTimer = Timer.periodic(Duration(seconds: 5), (timer) async {
+      if (!_isLoading) {
+        await _loadOrders();
+      }
+    });
+  }
+
+  // Stop order polling
+  void _stopOrderPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+  }
+
   // Test speech
   Future<void> testSpeech() async {
     await _speechService.testSpeech();
@@ -212,6 +269,7 @@ class StaffProvider with ChangeNotifier {
   // Dispose resources
   @override
   void dispose() {
+    _stopOrderPolling();
     _webSocketService.dispose();
     _speechService.dispose();
     super.dispose();

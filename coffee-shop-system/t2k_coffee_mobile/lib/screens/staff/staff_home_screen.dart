@@ -6,6 +6,7 @@ import '../../providers/staff_provider.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/staff_order_card.dart';
+import '../../widgets/connection_status_widget.dart';
 
 class StaffHomeScreen extends StatefulWidget {
   const StaffHomeScreen({super.key});
@@ -38,6 +39,37 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          // Connection status
+          Consumer<StaffProvider>(
+            builder: (context, staffProvider, child) {
+              return ConnectionStatusWidget(
+                isConnected: staffProvider.isConnected,
+                isConnecting: false,
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        staffProvider.isConnected
+                            ? 'WebSocket đã kết nối'
+                            : 'WebSocket chưa kết nối',
+                      ),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+          // Reload button
+          Consumer<StaffProvider>(
+            builder: (context, staffProvider, child) {
+              return IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: staffProvider.refreshOrders,
+              );
+            },
+          ),
           Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
               return PopupMenuButton<String>(

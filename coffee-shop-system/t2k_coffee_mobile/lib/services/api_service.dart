@@ -247,6 +247,23 @@ class ApiService {
     }
   }
 
+  // Orders - Get all orders (for staff)
+  Future<List<Order>> getAllOrders() async {
+    try {
+      final response = await _makeRequest('GET', ApiConfig.ordersEndpoint);
+      final data = _handleResponse(response);
+
+      if (data is List) {
+        return (data as List<dynamic>)
+            .map((json) => Order.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to fetch all orders: $e');
+    }
+  }
+
   Future<Order?> getOrder(int orderId) async {
     try {
       final response = await _makeRequest(

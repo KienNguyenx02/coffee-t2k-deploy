@@ -44,6 +44,7 @@ class WebSocketService {
     String? deviceId,
   }) async {
     if (_isConnecting || _isConnected) {
+      print('WebSocket already connecting/connected');
       return _isConnected;
     }
 
@@ -55,6 +56,7 @@ class WebSocketService {
 
     try {
       final uri = Uri.parse(ApiConfig.wsUrl);
+      print('Connecting to WebSocket: $uri');
       _channel = WebSocketChannel.connect(uri);
 
       // Listen to incoming messages
@@ -72,6 +74,7 @@ class WebSocketService {
         _isConnecting = false;
         _reconnectAttempts = 0;
         _connectionStatusController.add('connected');
+        print('WebSocket connected successfully');
 
         // Register user with server
         await _registerUser();
@@ -115,6 +118,7 @@ class WebSocketService {
   // Handle incoming messages
   void _handleMessage(dynamic message) {
     try {
+      print('Received WebSocket message: $message');
       final data = json.decode(message);
       final wsMessage = WebSocketMessage.fromJson(data);
 
@@ -122,6 +126,7 @@ class WebSocketService {
 
       // Handle specific message types
       if (wsMessage.type == 'ORDER_NOTIFICATION' && wsMessage.data != null) {
+        print('Received ORDER_NOTIFICATION: ${wsMessage.data}');
         final notification = OrderNotification.fromJson(wsMessage.data);
         _orderNotificationController.add(notification);
       }
@@ -184,6 +189,23 @@ class WebSocketService {
         'userId': _userId,
         'userType': _userType,
         'deviceId': _deviceId,
+      });
+
+      // Subscribe to relevant topics based on user type
+      if (_userType == 'STAFF' || _userType == 'ADMIN') {
+        // Staff should listen to staff orders topic
+        await _sendMessage('/topic/staff/orders', {
+          'action': 'subscribe',
+          'userId': _userId,
+          'userType': _userType,
+        });
+      }
+
+      // All users should listen to notifications
+      await _sendMessage('/queue/notifications', {
+        'action': 'subscribe',
+        'userId': _userId,
+        'userType': _userType,
       });
     }
   }
