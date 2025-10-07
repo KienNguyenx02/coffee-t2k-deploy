@@ -141,6 +141,20 @@ class OrderSuccessScreen extends StatelessWidget {
     );
   }
 
+  String _getDisplayLocation(Order order) {
+    // Kiểm tra nếu có table object (dine-in)
+    if (order.table != null && order.table!.tableNumber != null) {
+      String locationText = 'Bàn ${order.table!.tableNumber}';
+      if (order.table!.location != null && order.table!.location!.isNotEmpty) {
+        locationText += ' (${order.table!.location})';
+      }
+      return locationText;
+    }
+    
+    // Nếu không có table, mặc định là takeaway
+    return 'Mang đi';
+  }
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
