@@ -84,6 +84,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // Add table information
       if (_selectedTableType == 'dine_in' && _selectedTable != null) {
         orderData['table'] = {'idTable': _selectedTable!.idTable};
+      } else if (_selectedTableType == 'takeaway') {
+        // Set tableNumber to 'takeaway' for takeaway orders
+        orderData['tableNumber'] = 'takeaway';
       }
 
       // Add account information if logged in
@@ -303,7 +306,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       ),
                       child: Text(
-                        'Bàn ${table.tableName ?? 'Unknown'}',
+                        'Bàn ${table.tableName ?? table.idTable ?? 'Unknown'}',
                         style: TextStyle(
                           color: isSelected
                               ? Colors.white

@@ -138,8 +138,19 @@ class OrderDetail {
   Map<String, dynamic> toJson() => _$OrderDetailToJson(this);
 
   String get formattedSubtotal {
-    if (subtotal == null) return '0 đ';
-    return '${subtotal!.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} đ';
+    double calculatedSubtotal = 0;
+
+    // Nếu subtotal null, tính từ unitPrice * quantity
+    if (subtotal == null || subtotal == 0) {
+      if (unitPrice != null && quantity != null) {
+        calculatedSubtotal = unitPrice! * quantity!;
+      }
+    } else {
+      calculatedSubtotal = subtotal!;
+    }
+
+    if (calculatedSubtotal == 0) return '0 đ';
+    return '${calculatedSubtotal.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} đ';
   }
 }
 

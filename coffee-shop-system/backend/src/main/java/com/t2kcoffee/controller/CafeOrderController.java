@@ -140,7 +140,7 @@ public class CafeOrderController {
             }
             
             // Thiết lập ghi chú nếu có
-            if (requestData.containsKey("note")) {
+            if (requestData.containsKey("note") && requestData.get("note") != null) {
                 order.setNote(requestData.get("note").toString());
             }
             
