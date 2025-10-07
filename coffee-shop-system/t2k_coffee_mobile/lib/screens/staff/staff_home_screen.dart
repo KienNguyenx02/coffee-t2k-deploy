@@ -7,6 +7,9 @@ import '../../utils/app_theme.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/staff_order_card.dart';
 import '../../widgets/connection_status_widget.dart';
+import '../../widgets/notification_banner.dart';
+import '../../models/order.dart';
+import '../../services/speech_service.dart';
 
 class StaffHomeScreen extends StatefulWidget {
   const StaffHomeScreen({super.key});
@@ -16,6 +19,9 @@ class StaffHomeScreen extends StatefulWidget {
 }
 
 class _StaffHomeScreenState extends State<StaffHomeScreen> {
+  Order? _lastNewOrder;
+  bool _showNotification = false;
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +33,37 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
   Future<void> _initializeStaffServices() async {
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
     await staffProvider.initialize();
+  }
+
+  void _checkForNewOrders(StaffProvider staffProvider) {
+    final allOrders = staffProvider.allOrders;
+    if (allOrders.isNotEmpty) {
+      final latestOrder = allOrders.first;
+      if (_lastNewOrder == null ||
+          latestOrder.idOrder != _lastNewOrder!.idOrder) {
+        _lastNewOrder = latestOrder;
+        _showNewOrderNotification(latestOrder);
+
+        // Play notification sound
+        final speechService = SpeechService();
+        speechService.playNotificationSound();
+      }
+    }
+  }
+
+  void _showNewOrderNotification(Order order) {
+    setState(() {
+      _showNotification = true;
+    });
+
+    // Auto hide after 5 seconds
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _showNotification = false;
+        });
+      }
+    });
   }
 
   @override
@@ -115,10 +152,41 @@ class _StaffHomeScreenState extends State<StaffHomeScreen> {
       ),
       body: Consumer<StaffProvider>(
         builder: (context, staffProvider, child) {
-          return Column(
+          // Check for new orders
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _checkForNewOrders(staffProvider);
+          });
+
+          return Stack(
             children: [
-              _buildStatusBar(staffProvider),
-              Expanded(child: _buildMainContent(staffProvider)),
+              Column(
+                children: [
+                  _buildStatusBar(staffProvider),
+                  Expanded(child: _buildMainContent(staffProvider)),
+                ],
+              ),
+              // Notification overlay
+              if (_showNotification && _lastNewOrder != null)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: NotificationBanner(
+                    title: 'Đơn hàng mới!',
+                    message:
+                        'Đơn hàng #${_lastNewOrder!.idOrder} - ${_lastNewOrder!.displayLocation}',
+                    onTap: () {
+                      setState(() {
+                        _showNotification = false;
+                      });
+                    },
+                    onDismiss: () {
+                      setState(() {
+                        _showNotification = false;
+                      });
+                    },
+                  ),
+                ),
             ],
           );
         },

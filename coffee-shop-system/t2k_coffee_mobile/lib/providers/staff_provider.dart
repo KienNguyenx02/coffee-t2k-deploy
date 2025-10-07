@@ -135,7 +135,11 @@ class StaffProvider with ChangeNotifier {
         return b.orderTime!.compareTo(a.orderTime!);
       });
 
-      // Announce new order with speech
+      // Show notification alert
+      _showNewOrderNotification(order);
+
+      // Play notification sound and announce
+      _playNotificationSound();
       _speechService.announceNewOrder(
         orderId: order.idOrder!,
         tableNumber: order.tableNumber,
@@ -165,6 +169,19 @@ class StaffProvider with ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  // Show new order notification
+  void _showNewOrderNotification(Order order) {
+    // This will be handled by the UI layer
+    // For now, just trigger a notification event
+    notifyListeners();
+  }
+
+  // Play notification sound
+  void _playNotificationSound() {
+    // Use speech service to play notification sound
+    _speechService.playNotificationSound();
   }
 
   // Handle connection status changes
@@ -228,11 +245,60 @@ class StaffProvider with ChangeNotifier {
   // Start polling for new orders (fallback if WebSocket fails)
   void _startOrderPolling() {
     _stopOrderPolling();
-    _pollingTimer = Timer.periodic(Duration(seconds: 5), (timer) async {
+    _pollingTimer = Timer.periodic(Duration(seconds: 3), (timer) async {
       if (!_isLoading) {
-        await _loadOrders();
+        await _checkForNewOrders();
       }
     });
+  }
+
+  // Check for new orders by comparing with previous list
+  Future<void> _checkForNewOrders() async {
+    try {
+      final currentOrders = await _apiService.getAllOrders();
+
+      // Sort orders by time
+      currentOrders.sort((a, b) {
+        if (a.orderTime == null && b.orderTime == null) return 0;
+        if (a.orderTime == null) return 1;
+        if (b.orderTime == null) return -1;
+        return b.orderTime!.compareTo(a.orderTime!);
+      });
+
+      // Check if there are new orders
+      if (_allOrders.isNotEmpty && currentOrders.isNotEmpty) {
+        final latestCurrentOrder = currentOrders.first;
+        final latestKnownOrder = _allOrders.first;
+
+        if (latestCurrentOrder.idOrder != latestKnownOrder.idOrder) {
+          // Update orders list
+          _allOrders = currentOrders;
+
+          // Show notification and play sound
+          _showNewOrderNotification(latestCurrentOrder);
+          _playNotificationSound();
+
+          // Announce new order
+          _speechService.announceNewOrder(
+            orderId: latestCurrentOrder.idOrder!,
+            tableNumber: latestCurrentOrder.tableNumber,
+            location: latestCurrentOrder.location,
+            totalAmount: latestCurrentOrder.totalAmount,
+          );
+
+          notifyListeners();
+          return;
+        }
+      }
+
+      // Update orders list if different
+      if (_allOrders.length != currentOrders.length) {
+        _allOrders = currentOrders;
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error checking for new orders: $e');
+    }
   }
 
   // Stop order polling

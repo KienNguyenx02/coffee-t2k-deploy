@@ -80,6 +80,9 @@ dependencies:
   
   # Device info
   device_info_plus: ^9.1.1
+  
+  # Audio player for notification sounds
+  audioplayers: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -111,6 +114,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/sounds/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

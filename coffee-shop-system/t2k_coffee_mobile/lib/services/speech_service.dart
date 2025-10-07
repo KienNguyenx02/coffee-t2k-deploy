@@ -1,6 +1,7 @@
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class SpeechService {
   static final SpeechService _instance = SpeechService._internal();
@@ -9,6 +10,7 @@ class SpeechService {
 
   final FlutterTts _flutterTts = FlutterTts();
   final stt.SpeechToText _speechToText = stt.SpeechToText();
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   bool _isInitialized = false;
   bool _isListening = false;
@@ -222,9 +224,40 @@ class SpeechService {
     await speak(message);
   }
 
+  // Play notification sound
+  Future<void> playNotificationSound() async {
+    try {
+      // Play the notification bell sound
+      await _audioPlayer.play(AssetSource('sounds/thongbao.mp3'));
+    } catch (e) {
+      // If asset fails, try to create a simple beep sound
+      try {
+        // Create a simple notification sound using TTS with special characters
+        await _flutterTts.setSpeechRate(2.0); // Fast rate for beep-like sound
+        await _flutterTts.setVolume(0.8);
+        await _flutterTts.speak('🔔'); // Just the bell emoji
+        await Future.delayed(Duration(milliseconds: 500));
+        await _flutterTts.speak('🔔'); // Second bell
+        await Future.delayed(Duration(milliseconds: 500));
+        await _flutterTts.speak('🔔'); // Third bell
+
+        // Reset TTS settings
+        await _flutterTts.setSpeechRate(0.5);
+        await _flutterTts.setVolume(1.0);
+      } catch (ttsError) {
+        // Silent fallback - no sound played
+      }
+    }
+  }
+
   // Test speech functionality
   Future<void> testSpeech() async {
     await speak('Xin chào! Đây là thử nghiệm chức năng phát âm thanh.');
+  }
+
+  // Test notification sound
+  Future<void> testNotificationSound() async {
+    await playNotificationSound();
   }
 
   // Check if speech is available
@@ -243,5 +276,6 @@ class SpeechService {
   void dispose() {
     stopSpeaking();
     stopListening();
+    _audioPlayer.dispose();
   }
 }
