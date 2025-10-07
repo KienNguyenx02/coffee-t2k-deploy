@@ -6,6 +6,7 @@ import 'providers/cart_provider.dart';
 import 'providers/staff_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/register_screen.dart';
 import 'screens/customer/customer_home_screen.dart';
 import 'screens/customer/menu_screen.dart';
 import 'screens/customer/cart_screen.dart';
@@ -57,6 +58,10 @@ final GoRouter _router = GoRouter(
 
     // Authentication
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/register',
+      builder: (context, state) => const RegisterScreen(),
+    ),
 
     // Customer routes
     GoRoute(

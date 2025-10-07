@@ -223,74 +223,36 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
-                // Demo Credentials
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.backgroundColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppTheme.textSecondary.withOpacity(0.3),
+                // Register link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Chưa có tài khoản? ',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Tài khoản demo:',
+                    GestureDetector(
+                      onTap: () => context.push('/register'),
+                      child: Text(
+                        'Đăng ký ngay',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.primaryColor,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      _buildDemoAccount('Admin', 'admin', 'admin123'),
-                      _buildDemoAccount('Staff', 'staff', 'staff123'),
-                      _buildDemoAccount('Customer', 'customer', 'customer123'),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildDemoAccount(String role, String username, String password) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Text(
-            '$role: ',
-            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-          ),
-          Text(
-            username,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-          const Text(
-            ' / ',
-            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-          ),
-          Text(
-            password,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-        ],
       ),
     );
   }

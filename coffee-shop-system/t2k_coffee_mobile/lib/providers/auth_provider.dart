@@ -101,6 +101,43 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  // Register new user
+  Future<bool> register({
+    required String username,
+    required String password,
+    required String fullName,
+    required String email,
+    required String phone,
+    required String role,
+  }) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      final success = await _apiService.register(
+        username: username,
+        password: password,
+        fullName: fullName,
+        email: email,
+        phone: phone,
+        role: role,
+      );
+
+      if (success) {
+        _clearError();
+        return true;
+      } else {
+        _setError('Đăng ký thất bại. Vui lòng thử lại.');
+        return false;
+      }
+    } catch (e) {
+      _setError('Đăng ký thất bại: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   // Update reward points
   void updateRewardPoints(int points) {
     if (_currentUser != null) {

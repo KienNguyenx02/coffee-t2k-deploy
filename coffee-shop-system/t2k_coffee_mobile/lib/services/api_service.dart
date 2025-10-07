@@ -156,6 +156,36 @@ class ApiService {
     }
   }
 
+  // Register new user
+  Future<bool> register({
+    required String username,
+    required String password,
+    required String fullName,
+    required String email,
+    required String phone,
+    required String role,
+  }) async {
+    try {
+      final response = await _makeRequest(
+        'POST',
+        ApiConfig.accountsEndpoint,
+        body: json.encode({
+          'userName': username,
+          'passWord': password,
+          'fullName': fullName,
+          'email': email,
+          'phone': phone,
+          'role': role,
+        }),
+      );
+
+      final data = _handleResponse(response);
+      return data != null;
+    } catch (e) {
+      throw Exception('Registration failed: $e');
+    }
+  }
+
   Future<void> logout() async {
     await _clearTokenFromStorage();
   }
