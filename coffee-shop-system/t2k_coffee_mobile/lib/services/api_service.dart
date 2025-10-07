@@ -224,10 +224,16 @@ class ApiService {
     }
   }
 
-  // Orders
+  // Orders - Get orders for current user
   Future<List<Order>> getOrders() async {
     try {
-      final response = await _makeRequest('GET', ApiConfig.ordersEndpoint);
+      // Get current user ID from token
+      final userId = await _getUserIdFromToken();
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await _makeRequest('GET', '/api/orders/account/$userId');
       final data = _handleResponse(response);
 
       if (data is List) {
@@ -369,6 +375,37 @@ class ApiService {
       return response.statusCode == 200;
     } catch (e) {
       return false;
+    }
+  }
+
+  // Get user ID from JWT token
+  Future<int?> _getUserIdFromToken() async {
+    try {
+      if (_token == null) return null;
+
+      // Decode JWT token to get user ID
+      final parts = _token!.split('.');
+      if (parts.length != 3) return null;
+
+      final payload = parts[1];
+      // Add padding if needed
+      String normalizedPayload = payload;
+      switch (payload.length % 4) {
+        case 2:
+          normalizedPayload += '==';
+          break;
+        case 3:
+          normalizedPayload += '=';
+          break;
+      }
+
+      final decoded = base64Url.decode(normalizedPayload);
+      final payloadMap = json.decode(utf8.decode(decoded));
+
+      return payloadMap['userId'] as int?;
+    } catch (e) {
+      print('Error decoding token: $e');
+      return null;
     }
   }
 }

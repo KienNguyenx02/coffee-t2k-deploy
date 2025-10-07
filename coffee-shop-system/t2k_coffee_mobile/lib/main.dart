@@ -13,10 +13,12 @@ import 'screens/customer/orders_screen.dart';
 import 'screens/customer/profile_screen.dart';
 import 'screens/customer/checkout_screen.dart';
 import 'screens/customer/order_success_screen.dart';
+import 'screens/customer/product_detail_screen.dart';
 import 'screens/staff/staff_home_screen.dart';
 import 'screens/staff/orders_management_screen.dart';
 import 'utils/app_theme.dart';
 import 'models/order.dart';
+import 'models/product.dart';
 
 void main() {
   runApp(const T2KCoffeeApp());
@@ -79,6 +81,13 @@ final GoRouter _router = GoRouter(
           builder: (context, state) {
             final order = state.extra as Order;
             return OrderSuccessScreen(order: order);
+          },
+        ),
+        GoRoute(
+          path: 'product-detail',
+          builder: (context, state) {
+            final product = state.extra as Product;
+            return ProductDetailScreen(product: product);
           },
         ),
       ],

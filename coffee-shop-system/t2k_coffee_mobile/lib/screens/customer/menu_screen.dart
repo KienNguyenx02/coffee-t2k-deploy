@@ -261,8 +261,8 @@ class AddToCartBottomSheet extends StatefulWidget {
 class _AddToCartBottomSheetState extends State<AddToCartBottomSheet> {
   int _quantity = 1;
   String _selectedSize = 'M';
-  int _iceLevel = 100;
-  int _sugarLevel = 100;
+  String _iceLevel = 'Bình thường';
+  String _sugarLevel = 'Bình thường';
   final List<String> _selectedToppings = [];
 
   final List<String> _sizes = ['S', 'M', 'L'];
@@ -417,13 +417,40 @@ class _AddToCartBottomSheetState extends State<AddToCartBottomSheet> {
             // Ice level
             _buildSectionTitle('Mức độ đá'),
             const SizedBox(height: 8),
-            Slider(
-              value: _iceLevel.toDouble(),
-              min: 0,
-              max: 100,
-              divisions: 4,
-              label: '$_iceLevel%',
-              onChanged: (value) => setState(() => _iceLevel = value.round()),
+            Wrap(
+              spacing: 8,
+              children: ['Không đá', 'Ít đá', 'Bình thường', 'Nhiều đá'].map((
+                level,
+              ) {
+                final isSelected = _iceLevel == level;
+                return GestureDetector(
+                  onTap: () => setState(() => _iceLevel = level),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppTheme.primaryColor : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppTheme.primaryColor
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Text(
+                      level,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : AppTheme.textPrimary,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
 
             const SizedBox(height: 24),
@@ -431,13 +458,45 @@ class _AddToCartBottomSheetState extends State<AddToCartBottomSheet> {
             // Sugar level
             _buildSectionTitle('Mức độ đường'),
             const SizedBox(height: 8),
-            Slider(
-              value: _sugarLevel.toDouble(),
-              min: 0,
-              max: 100,
-              divisions: 4,
-              label: '$_sugarLevel%',
-              onChanged: (value) => setState(() => _sugarLevel = value.round()),
+            Wrap(
+              spacing: 8,
+              children:
+                  ['Không đường', 'Ít đường', 'Bình thường', 'Nhiều đường'].map(
+                    (level) {
+                      final isSelected = _sugarLevel == level;
+                      return GestureDetector(
+                        onTap: () => setState(() => _sugarLevel = level),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppTheme.primaryColor
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppTheme.primaryColor
+                                  : Colors.grey.shade300,
+                            ),
+                          ),
+                          child: Text(
+                            level,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppTheme.textPrimary,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ).toList(),
             ),
 
             const SizedBox(height: 24),

@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/accounts/*/reward-points").permitAll()
                 .requestMatchers("/api/dashboard/**").hasAuthority("ADMIN")
                 .requestMatchers("/api/system/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/orders/account/**").hasAnyAuthority("CUSTOMER", "STAFF", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/**").hasAnyAuthority("STAFF", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/**").hasAnyAuthority("STAFF", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/**").hasAnyAuthority("STAFF", "ADMIN")

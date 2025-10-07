@@ -87,8 +87,8 @@ class CartItem {
 @JsonSerializable()
 class ProductVariants {
   final String? size;
-  final int? ice;
-  final int? sugar;
+  final String? ice;
+  final String? sugar;
   final List<String>? toppings;
 
   ProductVariants({this.size, this.ice, this.sugar, this.toppings});
@@ -99,8 +99,8 @@ class ProductVariants {
 
   ProductVariants copyWith({
     String? size,
-    int? ice,
-    int? sugar,
+    String? ice,
+    String? sugar,
     List<String>? toppings,
   }) {
     return ProductVariants(
@@ -111,6 +111,10 @@ class ProductVariants {
     );
   }
 
-  static ProductVariants get defaultVariants =>
-      ProductVariants(size: 'M', ice: 100, sugar: 100, toppings: []);
+  static ProductVariants get defaultVariants => ProductVariants(
+    size: 'M',
+    ice: 'Bình thường',
+    sugar: 'Bình thường',
+    toppings: [],
+  );
 }

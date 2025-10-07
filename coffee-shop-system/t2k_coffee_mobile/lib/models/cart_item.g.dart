@@ -29,8 +29,8 @@ Map<String, dynamic> _$CartItemToJson(CartItem instance) => <String, dynamic>{
 ProductVariants _$ProductVariantsFromJson(Map<String, dynamic> json) =>
     ProductVariants(
       size: json['size'] as String?,
-      ice: (json['ice'] as num?)?.toInt(),
-      sugar: (json['sugar'] as num?)?.toInt(),
+      ice: json['ice'] as String?,
+      sugar: json['sugar'] as String?,
       toppings: (json['toppings'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
