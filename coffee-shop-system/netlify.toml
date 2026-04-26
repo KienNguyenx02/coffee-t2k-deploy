@@ -3,7 +3,9 @@
   publish = "."
   command = ""
 
+# Không sử dụng redirect 200 cho dự án nhiều file HTML (MPA)
+# Chỉ sử dụng 404 redirect nếu cần thiết
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200
+  status = 404
